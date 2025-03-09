@@ -44,14 +44,13 @@ public class SignupController {
         if (signupError == false) {
 
             int userId = userService.createUser(user, true);
-            // test code
+            // test code when not config with redis
             /*
-            Cache.ValueWrapper cacheValueWrapper =cacheManager.getCache("user").get(user.getUsername());
+            Cache.ValueWrapper cacheValueWrapper = cacheManager.getCache("user").get(user.getUsername());
             if(Optional.ofNullable(cacheValueWrapper).isPresent()){
                 System.out.println("check value of key in store of cache: " + cacheValueWrapper.get());
             }
             */
-
             if (userId <= 0) {
                 signupError = false;
                 model.addAttribute("errorMsg","create user failed.");
