@@ -2,6 +2,8 @@ package com.udacity.jwdnd.course1.cloudstorage.services;
 
 import com.udacity.jwdnd.course1.cloudstorage.entity.User;
 import com.udacity.jwdnd.course1.cloudstorage.mapper.UserMapper;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,8 +30,10 @@ public class UserService {
         return isUsernameAvailable;
     }
 
+
+    @CachePut(cacheNames = "user", key = "#p0.username", condition = "#saveCache")
     @Transactional(rollbackFor = Exception.class)
-    public Integer createUser(User user){
+    public Integer createUser(User user, boolean saveCache){
         SecureRandom random = new SecureRandom();
         byte[] salt = new byte[16];
         random.nextBytes(salt);
@@ -41,6 +45,7 @@ public class UserService {
         return userMapper.createUser(user);
     }
 
+    @Cacheable(cacheNames = "user", key = "#username", unless = "#result.startsWith('test-')")
     public Integer findUserIdByUsername(String username){
         Integer userId = 0;
         User user = userMapper.findUser(username);
