@@ -30,8 +30,6 @@ public class UserService {
         return isUsernameAvailable;
     }
 
-
-    @CachePut(cacheNames = "user", key = "#p0.username", condition = "#saveCache")
     @Transactional(rollbackFor = Exception.class)
     public Integer createUser(User user, boolean saveCache){
         SecureRandom random = new SecureRandom();
@@ -45,7 +43,6 @@ public class UserService {
         return userMapper.createUser(user);
     }
 
-    @Cacheable(cacheNames = "user", key = "#username", unless = "#result.startsWith('test-')")
     public Integer findUserIdByUsername(String username){
         Integer userId = 0;
         User user = userMapper.findUser(username);
