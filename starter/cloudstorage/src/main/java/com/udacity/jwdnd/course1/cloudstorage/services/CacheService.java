@@ -1,7 +1,9 @@
 package com.udacity.jwdnd.course1.cloudstorage.services;
 
+import com.udacity.jwdnd.course1.cloudstorage.entity.User;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,5 +18,9 @@ public class CacheService {
     @CacheEvict(cacheNames = "user", allEntries = true, beforeInvocation = true)
     public String clearAll(){
         return "clear all keys in cache named 'user'.";
+    }
+    @CachePut(cacheNames = "user", key = "#p0.username", condition = "#saveCache")
+    public Integer putUserInfoIntoCache(User user, boolean saveCache){
+        return user.getUserId();
     }
 }

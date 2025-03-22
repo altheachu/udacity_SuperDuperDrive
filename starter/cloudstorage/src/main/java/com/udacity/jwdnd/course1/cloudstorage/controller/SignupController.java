@@ -43,7 +43,7 @@ public class SignupController {
 
         if (signupError == false) {
 
-            int userId = userService.createUser(user, true);
+            int userId = userService.createUser(user, true, true);
             // test code when not config with redis
             /*
             Cache.ValueWrapper cacheValueWrapper = cacheManager.getCache("user").get(user.getUsername());

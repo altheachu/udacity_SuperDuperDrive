@@ -20,6 +20,7 @@ public class HomeController {
     private EncryptionService encryptionService;
     private CredentialService credentialService;
     private FileService fileService;
+
     public HomeController(NoteService noteService, UserService userService, CredentialService credentialService, EncryptionService encryptionService, FileService fileService){
         this.noteService = noteService;
         this.userService = userService;
@@ -29,7 +30,13 @@ public class HomeController {
     }
     @GetMapping
     public String getHomePage(Model model, Authentication authentication){
-        Integer userId = userService.findUserIdByUsername(authentication.getName());
+        Integer userId = null;
+        boolean useRedisTemplate = true;
+        if(useRedisTemplate){
+            userId = userService.findUserIdByRedisTemplate(authentication.getName());
+        } else {
+            userId = userService.findUserIdByUsername(authentication.getName());
+        }
         model.addAttribute("notes", noteService.findNotesByUserId(userId));
         model.addAttribute("credentials",credentialService.findCredentialsByUserId(userId));
         model.addAttribute("encryptionService",encryptionService);

@@ -9,16 +9,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.function.Supplier;
 
 @Service
 public class UserService {
 
     private UserMapper userMapper;
     private HashService hashService;
+    private CacheService cacheService;
 
-    public UserService(UserMapper userMapper, HashService hashService){
+    private RedisService redisService;
+
+
+    public UserService(UserMapper userMapper, HashService hashService, CacheService cacheService, RedisService redisService){
         this.userMapper = userMapper;
         this.hashService = hashService;
+        this.cacheService = cacheService;
+        this.redisService = redisService;
     }
 
     public boolean isUsernameAvailable(String username){
@@ -30,10 +37,8 @@ public class UserService {
         return isUsernameAvailable;
     }
 
-
-    @CachePut(cacheNames = "user", key = "#p0.username", condition = "#saveCache")
     @Transactional(rollbackFor = Exception.class)
-    public Integer createUser(User user, boolean saveCache){
+    public Integer createUser(User user, boolean saveCache, boolean useRedisTemplate){
         SecureRandom random = new SecureRandom();
         byte[] salt = new byte[16];
         random.nextBytes(salt);
@@ -42,7 +47,13 @@ public class UserService {
         String hashedPassword = hashService.getHashedValue(user.getPassword(), encodedSalt);
         user.setSalt(encodedSalt);
         user.setPassword(hashedPassword);
-        return userMapper.createUser(user);
+        int result = userMapper.createUser(user);
+        if(useRedisTemplate){
+            redisService.setString(user.getUsername(), user.getUserId());
+        } else {
+            cacheService.putUserInfoIntoCache(user, saveCache);
+        }
+        return result;
     }
 
     @Cacheable(cacheNames = "user", key = "#username", unless = "#result.startsWith('test-')")
@@ -53,6 +64,16 @@ public class UserService {
             userId = user.getUserId();
         }
         return userId;
+    }
+
+    public Integer findUserIdByRedisTemplate(String username){
+        Supplier<String> userSupplier = () -> {
+            User user = userMapper.findUser(username);
+            Integer userId = user!=null? user.getUserId(): 0;
+            return String.valueOf(userId);
+        };
+        String userId = redisService.getString(username, userSupplier);
+        return Integer.parseInt(userId);
     }
 
 }
